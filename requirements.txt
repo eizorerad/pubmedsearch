@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+gunicorn
+aiohttp
+python-dotenv
+cachetools
+pydantic
+pydantic-settings
+redis[hiredis]
