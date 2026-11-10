@@ -1,4 +1,4 @@
-"""PubMed Search API: a small key-protected HTTP wrapper around the NCBI E-utilities."""
+"""PubMed Search API: a small HTTP wrapper around the NCBI E-utilities, optionally key-protected."""
 import logging
 import os
 import re
@@ -12,15 +12,14 @@ from pydantic import BaseModel
 
 import pubmed
 
-API_KEY = os.getenv("API_KEY")
-if not API_KEY:
-    raise RuntimeError("API_KEY is not set: copy .env.example to .env and fill it in")
-
+API_KEY = os.getenv("API_KEY")  # optional: when set, every data endpoint requires it
 DATE = r"^[0-9]{4}/[0-9]{2}/[0-9]{2}$"
 FIELD_TAG = re.compile(r"\[[A-Za-z][A-Za-z /:-]*\]")  # [AU], [MeSH Terms], ... but not [18F]
 GUIDELINES = ('({}) AND ("guideline"[Publication Type] OR "practice guideline"[Publication Type]) '
               'AND "free full text"[Filter]')
 log = logging.getLogger("uvicorn.error")
+if not API_KEY:
+    log.warning("API_KEY is not set: anyone who can reach this server can use it")
 
 
 class ArticleSummary(BaseModel):
@@ -58,7 +57,7 @@ class SpellCheckResponse(BaseModel):
 
 
 def check_api_key(key: str | None = Security(APIKeyHeader(name="X-API-Key", auto_error=False))):
-    if not secrets.compare_digest((key or "").encode(), API_KEY.encode()):
+    if API_KEY and not secrets.compare_digest((key or "").encode(), API_KEY.encode()):
         raise HTTPException(403, "Could not validate credentials")
 
 

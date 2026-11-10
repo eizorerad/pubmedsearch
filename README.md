@@ -12,7 +12,7 @@ nothing unless both ends are given. This service handles all of that: it stays u
 retries failed calls and caches replies for an hour.
 
 It is handy for scripts and notebooks that collect literature, for your own apps, and as a PubMed
-tool for an LLM assistant: it is protected by a key and described by an OpenAPI schema (`/openapi.json`).
+tool for an LLM assistant: it can be protected by a key and is described by an OpenAPI schema (`/openapi.json`).
 
 ## Quick start
 
@@ -23,16 +23,7 @@ tool for an LLM assistant: it is protected by a key and described by an OpenAPI 
    cd pubmedsearch
    ```
 
-2. Create `.env` and set `API_KEY`, a password you choose for your service. Clients must send it in
-   the `X-API-Key` header, and the service won't start without it. Any long random string works;
-   `openssl rand -hex 32` just prints one. `NCBI_API_KEY` is optional: a free key from your NCBI
-   account settings raises the limit from 3 to 10 requests per second.
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Start it with Docker (http://localhost, port 80):
+2. Start it with Docker (http://localhost, port 80):
 
    ```bash
    docker compose up -d --build
@@ -43,20 +34,28 @@ tool for an LLM assistant: it is protected by a key and described by an OpenAPI 
    ```bash
    python3 -m venv .venv && source .venv/bin/activate
    pip install -r requirements.txt
-   uvicorn main:app --env-file .env
+   uvicorn main:app
    ```
 
-4. Send a first request, or open `/docs`, press Authorize and paste the key:
+3. Send a first request, or try the endpoints at `/docs`:
 
    ```bash
-   curl -H "X-API-Key: YOUR_API_KEY" "http://localhost/search/summary?query=crispr&max_results=3"
+   curl "http://localhost/search/summary?query=crispr&max_results=3"
    ```
 
-On a public server, put the API behind HTTPS (for example with Caddy), since the key travels in a header.
+Keys are optional. To set them, copy `.env.example` to `.env`, fill it in and restart
+(`docker compose up -d`, or `uvicorn main:app --env-file .env`):
+
+- `API_KEY` is a password you choose (any long random string). Once it is set, clients must send it
+  in the `X-API-Key` header; in `/docs`, press Authorize. Set it before putting the service on a public
+  server, and serve it over HTTPS there (for example with Caddy), since the key travels in a header.
+- `NCBI_API_KEY` is a free key from your NCBI account settings. It raises the limit from 3 to 10
+  requests per second.
 
 ## Endpoints
 
-Every endpoint except `/` and the docs (`/docs`, `/redoc`, `/openapi.json`) needs the `X-API-Key` header.
+When `API_KEY` is set, every endpoint except `/` and the docs (`/docs`, `/redoc`, `/openapi.json`)
+needs the `X-API-Key` header.
 
 | Endpoint | Returns |
 | --- | --- |

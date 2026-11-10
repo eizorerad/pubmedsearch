@@ -1,7 +1,9 @@
 services:
   api:
     build: .
-    env_file: .env
+    env_file:
+      - path: .env  # optional: API_KEY, NCBI_API_KEY
+        required: false
     ports:
       - "80:8000"
     restart: unless-stopped

@@ -4,7 +4,7 @@ import json
 import os
 import time
 
-os.environ["API_KEY"] = "test-key"  # main.py refuses to start without it
+os.environ["API_KEY"] = "test-key"  # read once on import; test_without_api_key_the_api_is_open unsets it
 
 import httpx2
 import pytest
@@ -127,6 +127,11 @@ def test_only_root_and_docs_are_public(ncbi):
     assert anonymous.get("/search?query=x").status_code == 403
     assert client.get("/search?query=x", headers={"X-API-Key": "wrong"}).status_code == 403
     assert ncbi.calls == []
+
+
+def test_without_api_key_the_api_is_open(ncbi, monkeypatch):
+    monkeypatch.setattr(main, "API_KEY", None)
+    assert TestClient(main.app).get("/search/summary?query=x").status_code == 200
 
 
 def test_search_returns_full_records(ncbi):
